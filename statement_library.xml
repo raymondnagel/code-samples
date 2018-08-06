@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <statement>
+    <name>All C-Ings by Experiment</name>
+    <sql>
+		SELECT DISTINCT
+		e.well_position,
+		e.experiment_id,
+		i.ingredient_name,
+		i.formula,
+		ci.concentration_value,
+		ci.concentration_unit,
+		ci.ph,
+		cir.role_name
+
+		FROM 
+		experiment AS e
+
+		JOIN
+		cocktail_ingredient AS ci
+		ON
+		e.cocktail_id = ci.cocktail_id
+
+		JOIN
+		cocktail_ingredient_role AS cir
+		ON ci.cocktail_id = cir.cocktail_id AND ci.ingredient_name = cir.ingredient_name
+
+		JOIN
+		ingredient AS i
+		ON ci.ingredient_name = i.ingredient_name
+
+		ORDER BY e.well_position
+	</sql>
+  </statement>
+  <statement>
+    <name>All Experiments</name>
+    <sql>
+		SELECT * FROM experiment
+	</sql>
+  </statement>
+  <statement>
+    <name>All Ingredients</name>
+    <sql>
+		SELECT DISTINCT ingredient_name
+		FROM ingredient
+	</sql>
+  </statement>
+  <statement>
+    <name>AutoSherlock Exp Match</name>
+    <sql>
+		SELECT experiment.experiment_id, cation, anion, peg, peg_conc, buffer_ph FROM
+
+		experiment
+		JOIN
+		(SELECT experiment_id, cation, anion FROM experiment_ingredient_info WHERE lcase(role_name) LIKE 'salt') AS salt_info
+		ON experiment.experiment_id = salt_info.experiment_id
+		JOIN
+		(SELECT experiment_id, ingredient_name AS peg, concentration_value AS peg_conc FROM experiment_ingredient_info WHERE lcase(role_name) LIKE 'peg') AS peg_info
+		ON experiment.experiment_id = peg_info.experiment_id
+		JOIN
+		(SELECT experiment_id, ph AS buffer_ph FROM experiment_ingredient_info WHERE lcase(role_name) LIKE 'buffer') AS buffer_info
+		ON experiment.experiment_id = buffer_info.experiment_id
+
+		WHERE experiment.experiment_id LIKE '?'
+	</sql>
+  </statement>
+  <statement>
+    <name>C-Ings by Experiment</name>
+    <sql>
+		SELECT
+		i.ingredient_name,
+		i.formula,
+		ci.concentration_value,
+		ci.concentration_unit,
+		ci.ph,
+		cir.role_name
+
+		FROM 
+		experiment AS e
+
+		JOIN
+		cocktail_ingredient AS ci
+		ON
+		e.cocktail_id = ci.cocktail_id
+
+		JOIN
+		cocktail_ingredient_role AS cir
+		ON ci.cocktail_id = cir.cocktail_id AND ci.ingredient_name = cir.ingredient_name
+
+		JOIN
+		ingredient AS i
+		ON ci.ingredient_name = i.ingredient_name
+
+		WHERE
+		e.well_position = 1000
+	</sql>
+  </statement>
+  <statement>
+    <name>Experiments by Anion</name>
+    <sql>
+		SELECT DISTINCT
+		e.experiment_id
+
+		FROM
+		experiment AS e,
+		cocktail_ingredient AS ci,
+		ingredient AS i
+
+		WHERE
+		e.cocktail_id = ci.cocktail_id AND
+		ci.ingredient_name = i.ingredient_name AND
+		lcase(i.anion) LIKE 'bromide'
+	</sql>
+  </statement>
+  <statement>
+    <name>Experiments by Buffer pH</name>
+    <sql>
+		SELECT DISTINCT
+		e.experiment_id
+
+		FROM
+		experiment AS e,
+		cocktail_ingredient AS ci,
+		cocktail_ingredient_role AS cir
+
+		WHERE
+		e.cocktail_id = ci.cocktail_id AND
+		ci.cocktail_id = cir.cocktail_id AND
+		lcase(cir.role_name) LIKE 'buffer' AND
+		ci.ph = 4.0
+	</sql>
+  </statement>
+  <statement>
+    <name>Experiments by Cation</name>
+    <sql>
+		SELECT DISTINCT
+		e.experiment_id
+
+		FROM
+		experiment AS e,
+		cocktail_ingredient AS ci,
+		ingredient AS i
+
+		WHERE
+		e.cocktail_id = ci.cocktail_id AND
+		ci.ingredient_name = i.ingredient_name AND
+		lcase(i.cation ) LIKE 'sodium'
+	</sql>
+  </statement>
+  <statement>
+    <name>Experiments by PEG conc</name>
+    <sql>
+		SELECT DISTINCT
+		e.experiment_id
+
+		FROM
+		experiment AS e,
+		cocktail_ingredient AS ci,
+		cocktail_ingredient_role AS cir
+
+		WHERE
+		e.cocktail_id = ci.cocktail_id AND
+		ci.cocktail_id = cir.cocktail_id AND
+		lcase(cir.role_name) LIKE 'peg' AND
+		ci.concentration_value = 10.0
+	</sql>
+  </statement>
+  <statement>
+    <name>Experiments by PEG name</name>
+    <sql>
+		SELECT DISTINCT
+		e.experiment_id
+
+		FROM
+		experiment AS e,
+		cocktail_ingredient AS ci,
+		cocktail_ingredient_role AS cir
+
+		WHERE
+		e.cocktail_id = ci.cocktail_id AND
+		ci.cocktail_id = cir.cocktail_id AND
+		lcase(cir.role_name) LIKE 'peg' AND
+		lcase(ci.ingredient_name) LIKE 'peg 6000'
+	</sql>
+  </statement>
+  <statement>
+    <name>HWI Experiments</name>
+    <sql>
+		SELECT experiment_id
+
+		FROM experiment
+		JOIN
+		cocktail
+		ON experiment.cocktail_id = cocktail.cocktail_id
+
+		WHERE commercial_code IS NULL
+	</sql>
+  </statement>
+  <statement>
+    <name>Well #1</name>
+    <sql>
+		SELECT * FROM experiment
+		WHERE well_position = 1
+	</sql>
+  </statement>
+  <statement>
+    <name>CREATE exp_ing_info VIEW</name>
+    <sql>
+		CREATE VIEW experiment_ingredient_info AS
+
+		SELECT DISTINCT
+		e.experiment_id, ci.ingredient_name, i.formula, ci.concentration_value, ci.concentration_unit, ci.ph, i.cation, i.anion, cir.role_name
+
+		FROM
+		experiment AS e
+		JOIN cocktail_ingredient AS ci
+		ON e.cocktail_id = ci.cocktail_id
+		JOIN ingredient AS i
+		ON ci.ingredient_name = i.ingredient_name
+		JOIN cocktail_ingredient_role AS cir
+		ON ci.cocktail_id = cir.cocktail_id AND ci.ingredient_name = cir.ingredient_name
+	</sql>
+  </statement>
+</library>
